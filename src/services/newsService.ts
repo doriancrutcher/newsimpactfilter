@@ -70,46 +70,32 @@ export const analyzePersonalImpact = async (
 };
 
 // News API service now uses our Netlify function proxy
-export const fetchTrumpAdminNews = async (): Promise<NewsArticle[]> => {
+export const fetchNews = async (keywords: string[]): Promise<NewsArticle[]> => {
+  const query = keywords.join(' OR ');
   try {
-    const response = await axios.get<NewsResponse>('/api/fetch-news');
+    const response = await axios.get<NewsResponse>('/.netlify/functions/fetch-news', {
+      params: { q: query }
+    });
     return response.data.articles || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching news via proxy:', error);
-    
-    // Return mock data for development if the proxy fails
-    return [
-      {
-        title: "Trump Administration Proposes New Tax Changes (Mock Data)",
-        description: "The administration is considering changes to income tax brackets that could affect middle-class families.",
-        content: "The Trump administration has proposed new tax legislation that would modify income tax brackets...",
-        url: "https://example.com/tax-changes",
-        publishedAt: new Date().toISOString(),
-        source: { name: "Mock News" }
-      },
-      {
-        title: "Healthcare Policy Updates Announced",
-        description: "New healthcare regulations could impact insurance coverage for millions of Americans.",
-        content: "The Department of Health and Human Services announced new healthcare regulations...",
-        url: "https://example.com/healthcare-updates",
-        publishedAt: new Date().toISOString(),
-        source: { name: "Mock News" }
-      },
-      {
-        title: "Foreign Policy Statement Released",
-        description: "The administration released a statement regarding international trade relations.",
-        content: "A new foreign policy statement was released today regarding trade relations...",
-        url: "https://example.com/foreign-policy",
-        publishedAt: new Date().toISOString(),
-        source: { name: "Mock News" }
-      }
-    ];
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Proxy responded with:', error.response.status, error.response.data);
+      const message = error.response.data?.message || error.message;
+      throw new Error(`The news proxy server failed: ${message}`);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      throw new Error(`Error fetching news: ${error.message}`);
+    }
   }
 };
 
 // Main function updated to accept keywords
 export const getNewsWithImpact = async (keywords: string[]) => {
-  const articles = await fetchTrumpAdminNews();
+  // Pass keywords to the fetch function
+  const articles = await fetchNews(keywords);
   
   const articlesWithImpact = await Promise.all(
     articles.map(async (article) => {
