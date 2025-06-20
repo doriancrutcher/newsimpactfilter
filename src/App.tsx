@@ -137,7 +137,19 @@ const DashboardPage: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await getNewsWithImpact(keywords);
+            const data = await getNewsWithImpact([
+                'tax', 'taxes', 'taxation', 'irs', 'income',
+                'healthcare', 'health', 'insurance', 'medicare', 'medicaid',
+                'social security', 'retirement', 'pension',
+                'education', 'student loans', 'fafsa',
+                'immigration', 'visa', 'citizenship',
+                'employment', 'jobs', 'unemployment', 'labor',
+                'housing', 'mortgage', 'rent', 'real estate',
+                'environment', 'climate', 'energy', 'utilities',
+                'transportation', 'gas', 'fuel', 'electric vehicles',
+                'consumer', 'consumer protection', 'privacy',
+                'small business', 'entrepreneur', 'startup'
+            ]);
             setNewsData(data);
         } catch (err) {
             setError('Failed to fetch news data.');
