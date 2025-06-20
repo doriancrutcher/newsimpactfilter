@@ -147,6 +147,8 @@ const DashboardPage: React.FC = () => {
         }
     };
     initialFetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []); // Run only once on initial mount
 
   const handleAnalyze = () => {
