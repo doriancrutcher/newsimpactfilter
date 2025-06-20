@@ -72,7 +72,7 @@ export const analyzePersonalImpact = async (
 // News API service now uses our Netlify function proxy
 export const fetchTrumpAdminNews = async (): Promise<NewsArticle[]> => {
   try {
-    const response = await axios.get('/api/fetch-news');
+    const response = await axios.get<NewsResponse>('/api/fetch-news');
     return response.data.articles || [];
   } catch (error) {
     console.error('Error fetching news via proxy:', error);
