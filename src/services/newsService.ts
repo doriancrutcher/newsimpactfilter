@@ -69,24 +69,18 @@ export const analyzePersonalImpact = async (
   };
 };
 
-// News API service (using NewsAPI.org - you'll need to get a free API key)
+// News API service now uses our Netlify function proxy
 export const fetchTrumpAdminNews = async (): Promise<NewsArticle[]> => {
   try {
-    // You'll need to sign up for a free API key at https://newsapi.org/
-    const API_KEY = process.env.REACT_APP_NEWS_API_KEY || 'your-api-key-here';
-    
-    const response = await axios.get<NewsResponse>(
-      `https://newsapi.org/v2/everything?q="Trump administration" OR "Trump policy" OR "executive order"&language=en&sortBy=publishedAt&pageSize=20&apiKey=${API_KEY}`
-    );
-    
+    const response = await axios.get('/api/fetch-news');
     return response.data.articles || [];
   } catch (error) {
-    console.error('Error fetching news:', error);
+    console.error('Error fetching news via proxy:', error);
     
-    // Return mock data for development
+    // Return mock data for development if the proxy fails
     return [
       {
-        title: "Trump Administration Proposes New Tax Changes",
+        title: "Trump Administration Proposes New Tax Changes (Mock Data)",
         description: "The administration is considering changes to income tax brackets that could affect middle-class families.",
         content: "The Trump administration has proposed new tax legislation that would modify income tax brackets...",
         url: "https://example.com/tax-changes",

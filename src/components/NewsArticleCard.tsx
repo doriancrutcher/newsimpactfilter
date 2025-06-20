@@ -57,9 +57,11 @@ const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ article, analysis }) 
                 </div>
 
                 <div className="card-actions">
-                    <button className="show-more-btn" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? 'Show Less' : 'Show More'}
-                    </button>
+                    {article.description && article.description.length > 150 && (
+                        <button className="show-more-btn" onClick={() => setIsExpanded(!isExpanded)}>
+                            {isExpanded ? 'Show Less' : 'Show More'}
+                        </button>
+                    )}
                     <a href={article.url} target="_blank" rel="noopener noreferrer" className="read-full-btn">
                         Read Full Article
                     </a>

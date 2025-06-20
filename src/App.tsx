@@ -3,12 +3,13 @@ import { Routes, Route, Link, Outlet, Navigate, useNavigate } from 'react-router
 import { User } from 'firebase/auth';
 import './App.css';
 import { getNewsWithImpact, NewsArticle, ImpactAnalysis } from './services/newsService';
-import { onAuthStateChange, signOutUser } from './services/firebase';
+import { onAuthStateChange, signOutUser, getUserProfile, updateUserProfile } from './services/firebase';
 import NewsImpactDashboard from './components/NewsImpactDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuthForm from './components/AuthForm';
 import UserProfile from './components/UserProfile';
 import FilterManager from './components/FilterManager';
+import { getAuth } from 'firebase/auth';
 
 interface NewsData {
   allArticles: (NewsArticle & { impact: ImpactAnalysis })[];
@@ -31,6 +32,8 @@ const defaultPersonalImpactKeywords = [
     'consumer', 'consumer protection', 'privacy',
     'small business', 'entrepreneur', 'startup'
 ];
+
+const DAILY_ANALYZE_LIMIT = 3;
 
 // Layout for all authenticated pages
 const Layout: React.FC<{ user: User; onSignOut: () => void }> = ({ user, onSignOut }) => {
@@ -70,23 +73,81 @@ const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [keywords, setKeywords] = useState<string[]>(defaultPersonalImpactKeywords);
 
-  const handleFetchNews = useCallback(async () => {
+  const [analysisCount, setAnalysisCount] = useState(0);
+  const [lastAnalysisDate, setLastAnalysisDate] = useState('');
+  const [canAnalyze, setCanAnalyze] = useState(true);
+  const authUser = getAuth().currentUser;
+
+  // Check and update user's analysis limit on component mount
+  useEffect(() => {
+    const checkUserLimit = async () => {
+      if (!authUser) return;
+
+      const userProfile = await getUserProfile(authUser.uid);
+      if (userProfile) {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const lastDate = userProfile.lastAnalysisDate || '';
+        let currentCount = userProfile.analysisCount || 0;
+
+        if (today !== lastDate) {
+          // It's a new day, reset the count
+          currentCount = 0;
+          await updateUserProfile(authUser.uid, { analysisCount: 0, lastAnalysisDate: today });
+        }
+        
+        setAnalysisCount(currentCount);
+        setLastAnalysisDate(today);
+        setCanAnalyze(currentCount < DAILY_ANALYZE_LIMIT);
+      }
+    };
+    checkUserLimit();
+  }, [authUser]);
+
+  const handleFetchNews = useCallback(async (force = false) => {
+    if (!canAnalyze && !force) {
+      setError(`You have reached your daily analysis limit of ${DAILY_ANALYZE_LIMIT}.`);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const data = await getNewsWithImpact(keywords);
       setNewsData(data);
+
+      // Increment analysis count after a successful fetch
+      if (authUser) {
+        const newCount = analysisCount + 1;
+        setAnalysisCount(newCount);
+        setCanAnalyze(newCount < DAILY_ANALYZE_LIMIT);
+        await updateUserProfile(authUser.uid, { analysisCount: newCount, lastAnalysisDate });
+      }
+
     } catch (err) {
       setError('Failed to fetch news data.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [keywords]);
+  }, [keywords, authUser, canAnalyze, analysisCount, lastAnalysisDate]);
 
+  // Initial fetch on component load (should not count against limit)
   useEffect(() => {
-    handleFetchNews();
-  }, [handleFetchNews]);
+    const initialFetch = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await getNewsWithImpact(keywords);
+            setNewsData(data);
+        } catch (err) {
+            setError('Failed to fetch news data.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    initialFetch();
+  }, []); // Run only once on initial mount
 
   const handleAnalyze = () => {
     handleFetchNews();
@@ -101,10 +162,13 @@ const DashboardPage: React.FC = () => {
         onAnalyze={handleAnalyze}
         isAnalyzing={loading}
       />
+      {error && !loading && (
+        <div className="error-container" style={{textAlign: 'center', padding: '20px', color: '#c0392b'}}>
+            {error}
+        </div>
+      )}
       {loading ? (
         <LoadingSpinner />
-      ) : error ? (
-        <div className="error-container">{error}</div>
       ) : newsData ? (
         <NewsImpactDashboard newsData={newsData} />
       ) : null}

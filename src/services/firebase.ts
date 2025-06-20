@@ -58,6 +58,8 @@ export interface UserProfile {
   };
   createdAt: Date;
   lastLogin: Date;
+  analysisCount?: number;
+  lastAnalysisDate?: string; // YYYY-MM-DD
 }
 
 // Google Sign-In function
@@ -86,7 +88,9 @@ export const signInWithGoogle = async (): Promise<User> => {
           notifications: true
         },
         createdAt: new Date(),
-        lastLogin: new Date()
+        lastLogin: new Date(),
+        analysisCount: 0,
+        lastAnalysisDate: '1970-01-01'
       };
       
       await setDoc(doc(db, 'users', user.uid), userProfile);
@@ -131,7 +135,9 @@ export const signUp = async (email: string, password: string, displayName?: stri
         notifications: true
       },
       createdAt: new Date(),
-      lastLogin: new Date()
+      lastLogin: new Date(),
+      analysisCount: 0,
+      lastAnalysisDate: '1970-01-01'
     };
     
     await setDoc(doc(db, 'users', user.uid), userProfile);
