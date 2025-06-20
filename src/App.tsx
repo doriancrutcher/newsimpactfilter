@@ -10,6 +10,7 @@ import AuthForm from './components/AuthForm';
 import UserProfile from './components/UserProfile';
 import FilterManager from './components/FilterManager';
 import { getAuth } from 'firebase/auth';
+import Modal from './components/Modal';
 
 interface NewsData {
   allArticles: (NewsArticle & { impact: ImpactAnalysis })[];
@@ -72,11 +73,12 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [keywords, setKeywords] = useState<string[]>(defaultPersonalImpactKeywords);
-
   const [analysisCount, setAnalysisCount] = useState(0);
   const [lastAnalysisDate, setLastAnalysisDate] = useState('');
   const [canAnalyze, setCanAnalyze] = useState(true);
   const authUser = getAuth().currentUser;
+  const [showAllStories, setShowAllStories] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Check and update user's analysis limit on component mount
   useEffect(() => {
@@ -167,6 +169,19 @@ const DashboardPage: React.FC = () => {
     handleFetchNews();
   };
 
+  const handleShowAllClick = () => {
+    if (newsData && newsData.impactCount === 0 && !showAllStories) {
+      setIsModalOpen(true);
+    } else {
+      setShowAllStories(!showAllStories);
+    }
+  };
+
+  const handleShowAllFromModal = () => {
+    setShowAllStories(true);
+    setIsModalOpen(false);
+  };
+
   return (
     <div>
       <FilterManager
@@ -184,8 +199,25 @@ const DashboardPage: React.FC = () => {
       {loading ? (
         <LoadingSpinner />
       ) : newsData ? (
-        <NewsImpactDashboard newsData={newsData} />
+        <>
+          <NewsImpactDashboard newsData={newsData} showAll={showAllStories} />
+          <div style={{ textAlign: 'center', margin: '20px 0' }}>
+            <button onClick={handleShowAllClick} className="show-all-btn">
+              {showAllStories ? 'Show Only Impactful Stories' : 'Show All Stories'}
+            </button>
+          </div>
+        </>
       ) : null}
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="friendly-modal-content">
+            <h3>We've reviewed the latest news for you.</h3>
+            <p>Based on your current filters, we couldn't find any stories that seem to have a direct impact on you. You can either adjust your filters or view all the stories we analyzed.</p>
+            <button onClick={handleShowAllFromModal} className="modal-action-btn">
+                Show All Stories Anyway
+            </button>
+        </div>
+      </Modal>
     </div>
   );
 };
