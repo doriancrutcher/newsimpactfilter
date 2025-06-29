@@ -1,0 +1,24 @@
+# Node dependencies
+node_modules/
+
+# Build output
+build/
+
+# Netlify local state and cache
+.netlify/
+*.netlify/
+
+# Local environment variables and secrets
+.env
+.env.*
+
+# OS-specific files
+.DS_Store
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# VSCode settings (optional, if you use VSCode)
+.vscode/
