@@ -3,7 +3,7 @@ import { Routes, Route, Link, Outlet, Navigate, useNavigate } from 'react-router
 import { User } from 'firebase/auth';
 import './App.css';
 import { getNewsWithImpact, NewsArticle, ImpactAnalysis } from './services/newsService';
-import { onAuthStateChange, signOutUser, getUserProfile, updateUserProfile } from './services/firebase';
+import { onAuthStateChange, signOutUser, getUserProfile } from './services/firebase';
 import NewsImpactDashboard from './components/NewsImpactDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 import AuthForm from './components/AuthForm';
