@@ -76,29 +76,26 @@ const DashboardPage = () => {
   const [showAllStories, setShowAllStories] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  // Check and update user's analysis limit on component mount
   useEffect(() => {
     const checkUserOnboarding = async () => {
-      if (!authUser) return;
-
+      if (!authUser) {
+        setProfileLoading(false);
+        return;
+      }
       const userProfile = await getUserProfile(authUser.uid);
       if (userProfile) {
-        // Onboarding Check
         if (!userProfile.hasCompletedOnboarding) {
           setNeedsOnboarding(true);
-          setLoading(false);
+          setProfileLoading(false);
           return;
         }
-        
-        // Set user tags from profile if available
         if (userProfile.impactPreferences?.categories) {
           setUserTags(userProfile.impactPreferences.categories);
         }
       }
-      // If no profile, maybe they need onboarding, but let's assume not for now to avoid loops
-      // This case should be handled by the onboarding flow creating the profile correctly.
-      setLoading(false);
+      setProfileLoading(false);
     };
     checkUserOnboarding();
   }, [authUser]);
@@ -109,7 +106,6 @@ const DashboardPage = () => {
       setError(null);
       const data = await getNewsWithImpact(userTags);
       setNewsData(data);
-
     } catch (err) {
       setError('Failed to analyze news data.');
       console.error(err);
@@ -118,10 +114,12 @@ const DashboardPage = () => {
     }
   }, [userTags]);
 
-  // Initial fetch on component load
+  // Only fetch news when profile loading is done and onboarding is not needed
   useEffect(() => {
-    handleFetchNews();
-  }, [handleFetchNews]);
+    if (!profileLoading && !needsOnboarding) {
+      handleFetchNews();
+    }
+  }, [profileLoading, needsOnboarding, handleFetchNews]);
 
   const handleAnalyze = () => {
     handleFetchNews();
@@ -145,22 +143,26 @@ const DashboardPage = () => {
     // Re-fetch user profile and news data
     const reloadData = async () => {
       if (!authUser) return;
-      setLoading(true);
+      setProfileLoading(true);
       const userProfile = await getUserProfile(authUser.uid);
       if (userProfile && userProfile.impactPreferences?.categories) {
         setUserTags(userProfile.impactPreferences.categories);
       }
-      setLoading(false);
+      setProfileLoading(false);
     };
     reloadData();
   };
 
-  if (loading) {
+  if (profileLoading) {
     return <LoadingSpinner />;
   }
 
   if (needsOnboarding) {
     return <OnboardingFlow user={authUser!} onComplete={handleOnboardingComplete} />;
+  }
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
   return (
@@ -177,9 +179,7 @@ const DashboardPage = () => {
             {error}
         </div>
       )}
-      {loading ? (
-        <LoadingSpinner />
-      ) : newsData ? (
+      {newsData ? (
         <>
           <NewsImpactDashboard newsData={newsData} showAll={showAllStories} />
           <div style={{ textAlign: 'center', margin: '20px 0' }}>
