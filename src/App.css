@@ -1445,7 +1445,7 @@ body {
 }
 
 .toggle-btn.expanded {
-    transform: rotate(180deg);
+    transform: rotate(360deg);
 }
 
 .filter-manager-content {
