@@ -2,6 +2,8 @@ import { OpenAI } from 'openai';
 import * as cheerio from 'cheerio';
 
 console.log('[generate-headlines] Function file loaded');
+console.log('[generate-headlines] ENV DUMP:', JSON.stringify(process.env, null, 2));
+
 
 // Real news headline fetcher and analyzer using GNews.io
 export const handler = async (event) => {
