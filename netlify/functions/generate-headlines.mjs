@@ -207,7 +207,7 @@ async function fetchRealNewsFromGNews(userTags, apiKey) {
 
   return uniqueNews
     .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-    .slice(0, 8); // Return top 8 most recent articles
+    .slice(0, 12); // Return top 12 most recent articles
 }
 
 // Function to extract article content and analyze with AI
